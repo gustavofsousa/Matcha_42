@@ -1,0 +1,53 @@
+-- Criação dos enums
+CREATE TYPE e_gender AS ENUM ('Male', 'Female', 'Nan');
+CREATE TYPE e_interests AS ENUM ('Literature', 'Music', 'Dance', 'Hiking', 'Karaoke', 'Religion', 'Climbing', 'Code', 'Animes');
+CREATE TYPE e_preference AS ENUM ('heterossexual', 'homossexual');
+
+-- Criação da tabela Users
+CREATE TABLE Users (
+    id SERIAL PRIMARY KEY,
+    firstName VARCHAR,
+    lastName VARCHAR,
+    username VARCHAR UNIQUE NOT NULL,
+    email VARCHAR UNIQUE NOT NULL,
+    password_hash VARCHAR NOT NULL,
+    age INT,
+    location VARCHAR,
+    profile INT REFERENCES Profile(id),
+    created_at TIMESTAMP DEFAULT NOW()
+);
+
+-- Criação da tabela Profile
+CREATE TABLE Profile (
+    id SERIAL PRIMARY KEY,
+    gender e_gender,
+    preference e_preference,
+    biography VARCHAR,
+    interests e_interests,
+    photos INT REFERENCES Photos(id),
+    likes INT
+);
+
+-- Criação da tabela Likes
+CREATE TABLE Likes (
+    id SERIAL PRIMARY KEY,
+    giver INT UNIQUE NOT NULL REFERENCES Profile(id),
+    receiver INT UNIQUE NOT NULL REFERENCES Profile(id),
+    created_at TIMESTAMP
+);
+
+-- Criação da tabela Photos
+CREATE TABLE Photos (
+    id SERIAL PRIMARY KEY,
+    photo1 VARCHAR,
+    photo2 VARCHAR,
+    photo3 VARCHAR,
+    photo4 VARCHAR,
+    photo5 VARCHAR
+);
+
+-- Atualização da tabela Profile para referenciar a tabela Likes
+ALTER TABLE Profile
+ADD CONSTRAINT fk_likes
+FOREIGN KEY (likes)
+REFERENCES Likes(id);
