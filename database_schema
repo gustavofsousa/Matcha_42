@@ -1,43 +1,40 @@
--- Criação dos enums
-CREATE TYPE e_gender AS ENUM ('Male', 'Female', 'Nan');
+CREATE TYPE e_gender AS ENUM ('Male', 'Female');
 CREATE TYPE e_interests AS ENUM ('Literature', 'Music', 'Dance', 'Hiking', 'Karaoke', 'Religion', 'Climbing', 'Code', 'Animes');
-CREATE TYPE e_preference AS ENUM ('heterossexual', 'homossexual');
+CREATE TYPE e_orientation AS ENUM ('hetero', 'homo');
 
--- Criação da tabela Users
-CREATE TABLE Users (
+CREATE TABLE IF NOT EXISTS Users (
     id SERIAL PRIMARY KEY,
     firstName VARCHAR,
     lastName VARCHAR,
     username VARCHAR UNIQUE NOT NULL,
     email VARCHAR UNIQUE NOT NULL,
-    password_hash VARCHAR NOT NULL,
     age INT,
-    location VARCHAR,
+    gender e_gender,
+    preference e_orientation,
+    password_hash VARCHAR NOT NULL,
+    email_verified BOOLEAN,
     profile INT REFERENCES Profile(id),
     created_at TIMESTAMP DEFAULT NOW()
 );
 
--- Criação da tabela Profile
-CREATE TABLE Profile (
+CREATE TABLE IF NOT EXISTS Profile (
     id SERIAL PRIMARY KEY,
-    gender e_gender,
-    preference e_preference,
+    location VARCHAR,
     biography VARCHAR,
     interests e_interests,
     photos INT REFERENCES Photos(id),
-    likes INT
+    likes INT,
+    blocks INT
 );
 
--- Criação da tabela Likes
-CREATE TABLE Likes (
+CREATE TABLE IF NOT EXISTS EachOther (
     id SERIAL PRIMARY KEY,
     giver INT UNIQUE NOT NULL REFERENCES Profile(id),
     receiver INT UNIQUE NOT NULL REFERENCES Profile(id),
     created_at TIMESTAMP
 );
 
--- Criação da tabela Photos
-CREATE TABLE Photos (
+CREATE TABLE IF NOT EXISTS Photos (
     id SERIAL PRIMARY KEY,
     photo1 VARCHAR,
     photo2 VARCHAR,
@@ -46,8 +43,20 @@ CREATE TABLE Photos (
     photo5 VARCHAR
 );
 
--- Atualização da tabela Profile para referenciar a tabela Likes
-ALTER TABLE Profile
-ADD CONSTRAINT fk_likes
-FOREIGN KEY (likes)
-REFERENCES Likes(id);
+CREATE TABLE IF NOT EXISTS Chats (
+    id SERIAL PRIMARY KEY
+);
+
+CREATE TABLE IF NOT EXISTS Notifications (
+    id SERIAL PRIMARY KEY
+);
+
+-- Atualização da tabela Profile para referenciar as tabelas EachOther e Likes
+DO $$
+BEGIN
+    ALTER TABLE Profile ADD CONSTRAINT fk_likes FOREIGN KEY (likes) REFERENCES EachOther(id);
+    ALTER TABLE Profile ADD CONSTRAINT fk_blocks FOREIGN KEY (blocks) REFERENCES EachOther(id);
+EXCEPTION
+    WHEN duplicate_column THEN
+        -- ignora se a coluna já existir
+END $$;
